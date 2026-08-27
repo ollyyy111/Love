@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Star Map Love Letter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #020617;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #e0f2fe;
+      overflow: hidden;
+    }
+
+    /* Deep Space Starfield Canvas */
+    #starCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Main Container (Shorts 9:16 Aspect Ratio) */
+    .viewport-card {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 90vh;
+      max-height: 780px;
+      background: rgba(8, 28, 58, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      box-shadow: 0 0 50px rgba(14, 165, 233, 0.25);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      overflow: hidden;
+      transition: all 1s ease;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* DARK BLUE CREATOR PANEL */
+    .creator-panel {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .badge {
+      align-self: center;
+      padding: 6px 16px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #38bdf8;
+      text-transform: uppercase;
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #bae6fd;
+      margin-bottom: 4px;
+    }
+
+    .input-group {
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+
+    /* Dark Mode Inputs with Glow */
+    .dark-input, .dark-textarea {
+      width: 100%;
+      background: rgba(3, 15, 38, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #e0f2fe;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .dark-textarea {
+      height: 110px;
+      resize: none;
+    }
+
+    .dark-input::placeholder, .dark-textarea::placeholder {
+      color: #335f8a;
+      font-style: italic;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+
+    .dark-input:focus::placeholder, .dark-textarea:focus::placeholder {
+      opacity: 0;
+    }
+
+    .dark-input:focus, .dark-textarea:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(56, 189, 248, 0.6);
+    }
+
+    /* SCENE CONTAINERS */
+    .scene-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .paper {
+      width: 100%;
+      min-height: 200px;
+      background: rgba(3, 15, 38, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: left;
+      font-family: 'Georgia', serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #e0f2fe;
+      box-shadow: 0 0 30px rgba(14, 165, 233, 0.2);
+      transition: opacity 1.5s ease, transform 1.5s ease;
+    }
+
+    .fade-out-paper {
+      opacity: 0;
+      transform: scale(0.9);
+      pointer-events: none;
+    }
+
+    .pen-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: #38bdf8;
+      vertical-align: middle;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* CONSTELLATION DISPLAY AREA */
+    .constellation-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #constellationSvg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .heart-line {
+      stroke: #38bdf8;
+      stroke-width: 2;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 8px #38bdf8);
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      transition: stroke-dashoffset 4s ease-in-out;
+    }
+
+    .heart-star {
+      fill: #e0f2fe;
+      filter: drop-shadow(0 0 10px #38bdf8);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .recipient-name-glow {
+      position: absolute;
+      font-family: 'Georgia', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 10px #38bdf8, 0 0 20px #0284c7, 0 0 30px #0369a1;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 1.5s ease, transform 1.5s ease;
+    }
+
+    .final-hook {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-top: 24px;
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+
+    .visible {
+      opacity: 1 !important;
+      transform: scale(1) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="starCanvas"></canvas>
+
+  <div class="viewport-card">
+
+    <!-- STEP 0: SETUP CREATOR PANEL -->
+    <div id="setupStep" class="creator-panel">
+      <div class="badge">Cosmic Engine</div>
+      <div class="title">Create Your Star Map</div>
+
+      <div class="input-group">
+        <label>Recipient Name</label>
+        <input type="text" id="recipientInput" class="dark-input" placeholder="Write person's name...">
+      </div>
+
+      <div class="input-group">
+        <label>Your Message</label>
+        <textarea id="messageInput" class="dark-textarea" placeholder="Write your feelings for them..."></textarea>
+      </div>
+
+      <button class="btn" id="startAnimBtn">Generate Letter ✨</button>
+    </div>
+
+    <!-- STEP 1: TYPING LETTER SCENE -->
+    <div id="sceneLetter" class="scene-box hidden">
+      <div class="paper" id="letterPaper">
+        <span id="letterText"></span><span class="pen-cursor" id="penCursor"></span>
+      </div>
+    </div>
+
+    <!-- STEP 2: CONSTELLATION REVEAL SCENE -->
+    <div id="sceneConstellation" class="scene-box hidden">
+      <div class="constellation-container">
+        <svg id="constellationSvg" viewBox="0 0 200 200">
+          <!-- Heart Path -->
+          <path id="heartPath" class="heart-line" d="M 100 160 C 20 100, 20 40, 60 40 C 85 40, 100 60, 100 60 C 100 60, 115 40, 140 40 C 180 40, 180 100, 100 160 Z" fill="none" />
+          
+          <!-- Constellation Nodes (Stars) -->
+          <circle class="heart-star" cx="100" cy="160" r="4" />
+          <circle class="heart-star" cx="42" cy="115" r="4" />
+          <circle class="heart-star" cx="30" cy="65" r="4" />
+          <circle class="heart-star" cx="60" cy="40" r="4" />
+          <circle class="heart-star" cx="85" cy="46" r="4" />
+          <circle class="heart-star" cx="100" cy="60" r="5" />
+          <circle class="heart-star" cx="115" cy="46" r="4" />
+          <circle class="heart-star" cx="140" cy="40" r="4" />
+          <circle class="heart-star" cx="170" cy="65" r="4" />
+          <circle class="heart-star" cx="158" cy="115" r="4" />
+        </svg>
+
+        <div class="recipient-name-glow" id="nameOverlay"></div>
+      </div>
+      <div class="final-hook" id="finalHook">Written in the stars. 🌌</div>
+    </div>
+
+  </div>
+
+  <script>
+    let recipientName = "";
+    let userMessage = "";
+
+    const setupStep = document.getElementById('setupStep');
+    const sceneLetter = document.getElementById('sceneLetter');
+    const sceneConstellation = document.getElementById('sceneConstellation');
+    const letterPaper = document.getElementById('letterPaper');
+    const letterText = document.getElementById('letterText');
+    const nameOverlay = document.getElementById('nameOverlay');
+    const finalHook = document.getElementById('finalHook');
+
+    document.getElementById('startAnimBtn').addEventListener('click', () => {
+      const rec = document.getElementById('recipientInput').value.trim();
+      const msg = document.getElementById('messageInput').value.trim();
+
+      recipientName = rec ? rec : "Someone Special";
+      userMessage = msg ? msg : "Out of 8 billion people in the world, my eyes will always look for you across the cosmos.";
+
+      setupStep.classList.add('hidden');
+      runCosmicTimeline();
+    });
+
+    function runCosmicTimeline() {
+      // Show Letter Phase
+      sceneLetter.classList.remove('hidden');
+      const fullContent = `Dearest ${recipientName},\n\n"${userMessage}"`;
+      
+      let index = 0;
+      const typewriter = setInterval(() => {
+        if (index < fullContent.length) {
+          letterText.innerText += fullContent.charAt(index);
+          index++;
+        } else {
+          clearInterval(typewriter);
+          document.getElementById('penCursor').style.display = 'none';
+
+          // Pause briefly, then fade out the letter so the constellation stands out
+          setTimeout(() => {
+            letterPaper.classList.add('fade-out-paper');
+            
+            setTimeout(() => {
+              sceneLetter.classList.add('hidden');
+              triggerConstellationScene();
+            }, 1500);
+          }, 2500);
+        }
+      }, 45);
+    }
+
+    function triggerConstellationScene() {
+      sceneConstellation.classList.remove('hidden');
+      nameOverlay.innerText = recipientName;
+
+      // Animate Heart Line Drawing
+      const heartPath = document.getElementById('heartPath');
+      setTimeout(() => {
+        heartPath.style.strokeDashoffset = '0';
+      }, 300);
+
+      // Fade in Constellation Stars along the path
+      const stars = document.querySelectorAll('.heart-star');
+      stars.forEach((star, i) => {
+        setTimeout(() => {
+          star.classList.add('visible');
+        }, 400 + i * 300);
+      });
+
+      // Display the Name inside the heart after lines complete
+      setTimeout(() => {
+        nameOverlay.classList.add('visible');
+        finalHook.classList.add('visible');
+      }, 3200);
+    }
+
+    // Glowing Blue Ambient Stars & Nebula Canvas
+    const canvas = document.getElementById('starCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const starField = Array.from({ length: 80 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 0.5,
+      alpha: Math.random() * 0.8 + 0.2,
+      speed: Math.random() * 0.02 + 0.005
+    }));
+
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      starField.forEach(star => {
+        star.alpha += star.speed;
+        if (star.alpha > 1 || star.alpha < 0.2) star.speed = -star.speed;
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(56, 189, 248, ${star.alpha})`;
+        ctx.shadowBlur = star.radius * 4;
+        ctx.shadowColor = "#38bdf8";
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animateStars);
+    }
+    animateStars();
+  </script>
+</body>
+</html>
